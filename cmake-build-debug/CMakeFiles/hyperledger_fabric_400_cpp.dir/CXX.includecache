@@ -1,0 +1,16 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/hama/work/hyperledger-fabric-400-cpp/hyperledger/fabric.cpp
+
+/home/hama/work/hyperledger-fabric-400-cpp/hyperledger/middleware.cpp
+
+/home/hama/work/hyperledger-fabric-400-cpp/main.cpp
+iostream
+-
+
