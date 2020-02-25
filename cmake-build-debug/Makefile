@@ -177,6 +177,33 @@ hyperledger/middleware.cpp.s:
 	$(MAKE) -f CMakeFiles/hyperledger_fabric_400_cpp.dir/build.make CMakeFiles/hyperledger_fabric_400_cpp.dir/hyperledger/middleware.cpp.s
 .PHONY : hyperledger/middleware.cpp.s
 
+hyperledger/sha256.o: hyperledger/sha256.cpp.o
+
+.PHONY : hyperledger/sha256.o
+
+# target to build an object file
+hyperledger/sha256.cpp.o:
+	$(MAKE) -f CMakeFiles/hyperledger_fabric_400_cpp.dir/build.make CMakeFiles/hyperledger_fabric_400_cpp.dir/hyperledger/sha256.cpp.o
+.PHONY : hyperledger/sha256.cpp.o
+
+hyperledger/sha256.i: hyperledger/sha256.cpp.i
+
+.PHONY : hyperledger/sha256.i
+
+# target to preprocess a source file
+hyperledger/sha256.cpp.i:
+	$(MAKE) -f CMakeFiles/hyperledger_fabric_400_cpp.dir/build.make CMakeFiles/hyperledger_fabric_400_cpp.dir/hyperledger/sha256.cpp.i
+.PHONY : hyperledger/sha256.cpp.i
+
+hyperledger/sha256.s: hyperledger/sha256.cpp.s
+
+.PHONY : hyperledger/sha256.s
+
+# target to generate assembly for a file
+hyperledger/sha256.cpp.s:
+	$(MAKE) -f CMakeFiles/hyperledger_fabric_400_cpp.dir/build.make CMakeFiles/hyperledger_fabric_400_cpp.dir/hyperledger/sha256.cpp.s
+.PHONY : hyperledger/sha256.cpp.s
+
 main.o: main.cpp.o
 
 .PHONY : main.o
@@ -219,6 +246,9 @@ help:
 	@echo "... hyperledger/middleware.o"
 	@echo "... hyperledger/middleware.i"
 	@echo "... hyperledger/middleware.s"
+	@echo "... hyperledger/sha256.o"
+	@echo "... hyperledger/sha256.i"
+	@echo "... hyperledger/sha256.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

@@ -96,6 +96,18 @@
 		<Unit filename="/home/hama/work/hyperledger-fabric-400-cpp/hyperledger/middleware.h">
 			<Option target="hyperledger_fabric_400_cpp"/>
 		</Unit>
+		<Unit filename="/home/hama/work/hyperledger-fabric-400-cpp/hyperledger/sha256.cpp">
+			<Option target="hyperledger_fabric_400_cpp"/>
+		</Unit>
+		<Unit filename="/home/hama/work/hyperledger-fabric-400-cpp/hyperledger/sha256.h">
+			<Option target="hyperledger_fabric_400_cpp"/>
+		</Unit>
+		<Unit filename="/home/hama/work/hyperledger-fabric-400-cpp/hyperledger/stop_watch.h">
+			<Option target="hyperledger_fabric_400_cpp"/>
+		</Unit>
+		<Unit filename="/home/hama/work/hyperledger-fabric-400-cpp/hyperledger/string_format.h">
+			<Option target="hyperledger_fabric_400_cpp"/>
+		</Unit>
 		<Unit filename="/home/hama/work/hyperledger-fabric-400-cpp/main.cpp">
 			<Option target="hyperledger_fabric_400_cpp"/>
 		</Unit>
