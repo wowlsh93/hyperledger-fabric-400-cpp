@@ -74,7 +74,7 @@ void Peer::start(){
     if (peer_type == 1) {
         _endorser = std::thread([&]() { endorsing(); });
     }
-    _endorser = std::thread([&]() { committing(); });
+    _committer = std::thread([&]() { committing(); });
 }
 
 
@@ -84,25 +84,25 @@ void Peer::endorsing(){
     std::unique_lock<std::mutex> rwlock(_rwsetMtx , std::defer_lock);
 
     while (!_stop) {
-        //translock.lock();
+        translock.lock();
 
         if (_transactionList.empty()) {
-            //_transCond.wait(translock);
+            _transCond.wait(translock);
         }
 
         if (_transactionList.empty()) {
-            //translock.unlock();
+            translock.unlock();
             continue;
         }
 
         Transaction trans = _transactionList.front();
-        //translock.unlock();
+        translock.unlock();
 
         if (trans.client_msp == fabric->MSP_org1) {
             //
             //execute chain code !!!
             //
-            RWSet rwset(trans.key,trans.value,msp.id);
+            RWSet rwset(trans.key,trans.value,msp.id, {});
 
             rwlock.lock();
             _rwsetList.push_back(rwset);
@@ -111,9 +111,9 @@ void Peer::endorsing(){
 
         }
 
-        //translock.lock();
+        translock.lock();
         _transactionList.pop_front();
-        //translock.unlock();
+        translock.unlock();
 
     }
 }
@@ -325,7 +325,7 @@ void Fabric::stop(){
 
 }
 
-std::tuple<RWSet, RWSet> Fabric::writeTranaction(string key , string value, string auth){
+std::tuple<RWSet, RWSet> Fabric::writeTransaction(string key , string value, string auth){
 
     Transaction t (auth,key,value);
 

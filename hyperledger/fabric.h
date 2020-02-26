@@ -37,7 +37,7 @@ struct _Transaction {
 
 //================================= RWSet
 struct RWSet {
-    RWSet(string key, string value, string msp):key(key),value(value),msp(msp) {}
+    RWSet(string key, string value, string id, vector<string> msps):key(key),value(value),msp(id),peers_msp(msps) {}
     string msp;
     string key;
     string value;
@@ -209,7 +209,7 @@ public:
 
     void start();
     void stop();
-    std::tuple<RWSet, RWSet> writeTranaction(string key , string value, string auth);
+    std::tuple<RWSet, RWSet> writeTransaction(string key , string value, string auth);
     string readTranaction( string key , string auth );
     void sendToOrderer(RWSet rwset);
 
