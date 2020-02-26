@@ -6,10 +6,14 @@
 
 void ClientSDK::startFabric() {
 
-    fab.start();
-
+    fab = new Fabric;
+    fab->start();
 }
 
+void ClientSDK::endFabric() {
+    fab->stop();
+    delete fab;
+}
 
 void ClientSDK::writeTrans(std::string key, std::string value) {
 

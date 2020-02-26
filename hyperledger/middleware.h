@@ -12,12 +12,13 @@
 
 class ClientSDK {
 
+
 public:
     void writeTrans(std::string key, std::string value);
     std::string getTrans(std::string key);
-
     void startFabric();
+    void endFabric();
 
-    Fabric fab;
+    Fabric* fab;
 
 };

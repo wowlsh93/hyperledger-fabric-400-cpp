@@ -103,18 +103,18 @@ struct MSP  {
 class Fabric;
 class Peer  {
 public:
-    Peer(int _peer_type, MSP _msp, shared_ptr<Fabric> _fabric, shared_ptr<Ledger> _ledger){
+    Peer(int _peer_type, MSP _msp, Fabric*  _fabric, shared_ptr<Ledger> _ledger){
         peer_type = _peer_type;
         msp = _msp;
         fabric = _fabric;
         ledger = _ledger;
-    };
-    ~Peer(){};
+    }
+    ~Peer(){}
 
 private:
     int peer_type; // 0 commit only peer, 1 endorse + commit peer
     shared_ptr<Ledger> ledger;
-    shared_ptr<Fabric> fabric;
+    Fabric* fabric;
     MSP msp;
 
     std::thread _endorser;
@@ -149,7 +149,7 @@ class Fabric;
 class Kafaka;
 class Orderer  {
 public:
-    Orderer(MSP _msp, shared_ptr<Kafaka> _kafka, vector<shared_ptr<Peer>> _committer, shared_ptr<Fabric> _fabric);
+    Orderer(MSP _msp, shared_ptr<Kafaka> _kafka, vector<shared_ptr<Peer>> _committer, Fabric* _fabric);
     ~Orderer();
 
 private:
@@ -161,7 +161,7 @@ private:
     std::mutex _rwsetMtx;
     std::condition_variable _rwsetCond;
     vector<shared_ptr<Peer>> committer;
-    shared_ptr<Fabric> fabric;
+    Fabric* fabric;
     shared_ptr<Kafaka> kafka;
 
     bool _stop;
@@ -185,7 +185,7 @@ struct Kafaka  {
 };
 
 //==================================  FABRIC  =================================//
-class Fabric  : public std::enable_shared_from_this<Fabric>{
+class Fabric {
 
 private:
     shared_ptr<Kafaka>   kafka;
@@ -208,6 +208,7 @@ public:
 public:
 
     void start();
+    void stop();
     std::tuple<RWSet, RWSet> writeTranaction(string key , string value, string auth);
     string readTranaction( string key , string auth );
     void sendToOrderer(RWSet rwset);

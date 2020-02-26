@@ -84,19 +84,19 @@ void Peer::endorsing(){
     std::unique_lock<std::mutex> rwlock(_rwsetMtx , std::defer_lock);
 
     while (!_stop) {
-        translock.lock();
+        //translock.lock();
 
         if (_transactionList.empty()) {
-            _transCond.wait(translock);
+            //_transCond.wait(translock);
         }
 
         if (_transactionList.empty()) {
-            translock.unlock();
+            //translock.unlock();
             continue;
         }
 
         Transaction trans = _transactionList.front();
-        translock.unlock();
+        //translock.unlock();
 
         if (trans.client_msp == fabric->MSP_org1) {
             //
@@ -111,9 +111,9 @@ void Peer::endorsing(){
 
         }
 
-        translock.lock();
+        //translock.lock();
         _transactionList.pop_front();
-        translock.unlock();
+        //translock.unlock();
 
     }
 }
@@ -176,7 +176,7 @@ string Peer::getData(string key){
 }
 
 
-Orderer::Orderer(MSP _msp, shared_ptr<Kafaka> _kafka, vector<shared_ptr<Peer>> _committer, shared_ptr<Fabric> _fabric){
+Orderer::Orderer(MSP _msp, shared_ptr<Kafaka> _kafka, vector<shared_ptr<Peer>> _committer, Fabric* _fabric){
     msp = _msp;
     fabric = _fabric;
     committer = _committer;
@@ -290,19 +290,19 @@ void Fabric::start(){
     MSP msp_peer1;
     msp_peer1.id = MSP_peer1;
 
-    endorser1 = std::make_shared<Peer>(1, msp_peer1, shared_from_this(), ledger);
+    endorser1 = std::make_shared<Peer>(1, msp_peer1, this, ledger);
     endorser1->start();
 
     MSP msp_peer2;
     msp_peer2.id = MSP_peer2;
 
-    endorser2 = std::make_shared<Peer>(1, msp_peer2, shared_from_this(), ledger);
+    endorser2 = std::make_shared<Peer>(1, msp_peer2, this, ledger);
     endorser2->start();
 
     MSP msp_peer3;
     msp_peer3.id = MSP_peer3;
 
-    committer = std::make_shared<Peer>(0, msp_peer3, shared_from_this(), ledger);
+    committer = std::make_shared<Peer>(0, msp_peer3, this, ledger);
     committer->start();
 
     // 2. kafka simulator start
@@ -317,8 +317,12 @@ void Fabric::start(){
     _committer.push_back(endorser2);
     _committer.push_back(committer);
 
-    orderer1 = std::make_shared<Orderer>(msp_orderer1, kafka, _committer, shared_from_this());
+    orderer1 = std::make_shared<Orderer>(msp_orderer1, kafka, _committer, this);
     orderer1->start();
+}
+
+void Fabric::stop(){
+
 }
 
 std::tuple<RWSet, RWSet> Fabric::writeTranaction(string key , string value, string auth){
