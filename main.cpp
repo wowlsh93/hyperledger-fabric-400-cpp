@@ -1,27 +1,29 @@
 #include <iostream>
 #include <string>
 #include "hyperledger/middleware.h"
-
+#include "hyperledger/stop_watch.h"
 
 int main() {
     std::cout << "Start !!!" << std::endl;
 
     ClientSDK sdk;
     sdk.startFabric();
+    std::cout << "Start 2!!!" << std::endl;
 
-    sdk.writeTrans("1", "bitcoin");
-    sdk.writeTrans("2", "ethereum");
-    sdk.writeTrans("3", "hyperledger");
-    sdk.writeTrans("4", "eos");
+    hama::StopWatch sw;
 
-
-    std::string result1 = sdk.getTrans("1");
-    std::string result2 = sdk.getTrans("2");
-    std::string result3 = sdk.getTrans("3");
-
-    std::cout << "key1" <<  result1 << std::endl;
-    std::cout << "key2" <<  result2 << std::endl;
-    std::cout << "key3" <<  result3 << std::endl;
+    for (int i = 0 ; i < 1010 ; i++) {
+        sdk.writeTrans(std::to_string(i),std::to_string(i));
+    }
+    std::cout << "Start 3!!!" << std::endl;
+    while(true) {
+        string result = sdk.getTrans("1000");
+        if (result != "") {
+            break;
+        }
+    }
+    std::cout << "Start 4!!!" << std::endl;
+    std::cout << sw.stop() << std::endl;
 
     return 0;
 }

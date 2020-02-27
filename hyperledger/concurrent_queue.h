@@ -34,21 +34,21 @@ namespace hama {
             return item;
         }
 
-        std::vector<T> pop(int n) {
-
-            std::unique_lock<std::mutex> lock(_mtx);
-            while ( size() < n) {
-                _cond.wait(lock);
-            }
-
-            std::vector<T> items;
-            for (int i= 0 ; i < n ; i++){
-                items.push_back(_que.front());
-                _que.pop();
-            }
-
-            return items;
-        }
+//        std::vector<T> pop(int n) {
+//
+//            std::unique_lock<std::mutex> lock(_mtx);
+//            while ( size() < n) {
+//                _cond.wait(lock);
+//            }
+//
+//            std::vector<T> items;
+//            for (int i= 0 ; i < n ; i++){
+//                items.push_back(_que.front());
+//                _que.pop();
+//            }
+//
+//            return items;
+//        }
 
         void pop(T& item) {
 

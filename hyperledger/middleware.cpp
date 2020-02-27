@@ -18,10 +18,10 @@ void ClientSDK::endFabric() {
 string ClientSDK::writeTrans(std::string key, std::string value) {
     std::tuple<RWSet, RWSet> rwsets = fab->writeTransaction(key, value, fab->MSP_org1);
 
-    if (get<0>(rwsets).msp == fab->MSP_peer1 && get<1>(rwsets).msp == fab->MSP_peer1 ) {
+    if (get<0>(rwsets).msp == fab->MSP_peer1 && get<1>(rwsets).msp == fab->MSP_peer2 ) {
         vector<string> msps;
-        msps.push_back(get<0>(rwsets).msp);
-        msps.push_back(get<1>(rwsets).msp);
+        msps.push_back(fab->MSP_peer1);
+        msps.push_back(fab->MSP_peer2);
 
         RWSet rwset(key, value, "", msps);
         fab->sendToOrderer(rwset);

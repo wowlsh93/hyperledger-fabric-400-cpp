@@ -23,29 +23,29 @@ void LevelDB::setValue(string key, string value){
 // LEDGER
 void Ledger::createGenesisBlock(){
     time( &timeCur );
-    _Block  genesisBlock;
-    genesisBlock.Index = 0;
-    genesisBlock.Timestamp = 0;
-    genesisBlock.Hash = calculateHash(genesisBlock);
-    genesisBlock.PrevHash = "";
+    shared_ptr<_Block>  genesisBlock = std::make_shared<_Block>();
+    genesisBlock->Index = 0;
+    genesisBlock->Timestamp = 0;
+    genesisBlock->Hash = calculateHash(genesisBlock);
+    genesisBlock->PrevHash = "";
 
-    std::lock_guard<std::mutex> lock(_vMtx);
+    //std::lock_guard<std::mutex> lock(_vMtx);
     blockchain.push_back(genesisBlock);
 }
 
 void Ledger::addBlock(Block block){
-    std::lock_guard<std::mutex> lock(_vMtx);
-    _Block prevBlock = blockchain.back();
-    _Block newBlock = generateBlock(prevBlock, block);
+    //std::lock_guard<std::mutex> lock(_vMtx);
+    shared_ptr<_Block> prevBlock = blockchain.back();
+    shared_ptr<_Block> newBlock = generateBlock(prevBlock, block);
     blockchain.push_back(newBlock);
 }
-_Block Ledger::generateBlock(_Block oldBlock , Block block ){
-    _Block newBlock;
+shared_ptr<_Block> Ledger::generateBlock(shared_ptr<_Block> oldBlock , Block block ){
+    auto newBlock = std::make_shared<_Block>();
     time( &timeCur );
-    newBlock.Index = oldBlock.Index + 1;
-    newBlock.Timestamp = timeCur;
-    newBlock.PrevHash = oldBlock.Hash;
-    newBlock.Hash = calculateHash(newBlock);
+    newBlock->Index = oldBlock->Index + 1;
+    newBlock->Timestamp = timeCur;
+    newBlock->PrevHash = oldBlock->Hash;
+    newBlock->Hash = calculateHash(newBlock);
     return newBlock;
 }
 void Ledger::setState(_Transaction trans ){
@@ -56,14 +56,14 @@ string Ledger::getState(Transaction trans ){
     return db->getValue(trans.key);
 }
 
-string Ledger::calculateHash(_Block block) {
+string Ledger::calculateHash(shared_ptr<_Block> block) {
 
-    string trans_concated;
-    for (_Transaction trans : block.Trans ) {
-        trans_concated.append(trans.value);
-    }
-    string record = hama::string_format("%d%lf%s%s\n", block.Index, block.Timestamp, trans_concated, block.PrevHash);
-
+//    string trans_concated;
+//    for (_Transaction trans : block.Trans ) {
+//        trans_concated.append(trans.value);
+//    }
+    //string record = hama::string_format("%d%lf%s%s\n", block.Index, block.Timestamp, trans_concated, block.PrevHash);
+    string record = "afefwfwef2323f2332f23f23wfwefweref23423423sdvsvsr423423432432432f23f23f23432234322f";
     string hashed = sha256(record);
     return hashed;
 }
@@ -71,6 +71,9 @@ string Ledger::calculateHash(_Block block) {
 
 // PEER
 void Peer::start(){
+
+    ledger->createGenesisBlock();
+
     if (peer_type == 1) {
         _endorser = std::thread([&]() { endorsing(); });
     }
@@ -129,7 +132,8 @@ void Peer::committing(){
         }
 
         Block block = _blockList.front();
-        rlock.unlock();
+        _blockList.pop_front();
+
 
         bool ok = validating(block);
         if (ok == false) {
@@ -141,6 +145,7 @@ void Peer::committing(){
         }
 
         ledger->addBlock(block);
+        rlock.unlock();
     }
 
 }
@@ -150,8 +155,16 @@ RWSet Peer::addTrans(Transaction trans){
     translock.lock();
     _transactionList.push_back(trans);
     translock.unlock();
-
     _transCond.notify_all();
+
+    std::unique_lock<std::mutex> rwlock(_rwsetMtx );
+    while (_rwsetList.empty()) {
+        _rwsetCond.wait(rwlock);
+
+    }
+    RWSet rwset = _rwsetList.front();
+    _rwsetList.pop_front();
+    return rwset;
 }
 
 void Peer::addBlock(Block block){
@@ -191,52 +204,35 @@ void Orderer::addCommitter(shared_ptr<Peer> peer){
 
 void Orderer::start(){
 
-    _producer = std::thread([&]() { producer(); });
-    _consumer = std::thread([&]() { consumer(); });
+  //  _producer = std::thread([&]() { producer(); });
+ //   _consumer = std::thread([&]() { consumer(); });
 
 }
+
 void Orderer::addRWSet(RWSet rwset){
-    std::unique_lock<std::mutex> rwsetlock(_rwsetMtx, std::defer_lock);
-    rwsetlock.lock();
-    _rwsetList.push_back(rwset);
-    rwsetlock.unlock();
-    _rwsetCond.notify_all();
-}
-void Orderer::producer(){
+    //_rwsetList.push(rwset);
+    vector<RWSet> rwsets;
+    rwsets.push_back(rwset);
+    auto newBlock = createBlock(rwsets);
 
-    std::unique_lock<std::mutex> rwlock(_rwsetMtx , std::defer_lock);
-
-    while (!_stop) {
-        rwlock.lock();
-
-        if (_rwsetList.empty()) {
-            _rwsetCond.wait(rwlock);
-        }
-
-        if (_rwsetList.empty()) {
-            rwlock.unlock();
-            continue;
-        }
-
-        rwlock.unlock();
-        RWSet rwset = _rwsetList.front();
-        kafka->push(rwset);
-
-        rwlock.lock();
-        _rwsetList.pop_front();
-        rwlock.unlock();
-
+    for(shared_ptr<Peer> peer : committer){
+        peer->addBlock(newBlock);
     }
 }
+
+void Orderer::producer(){
+    while (!_stop){
+        kafka->push(_rwsetList.pop());
+    }
+}
+
 void Orderer::consumer(){
 
     while (!_stop) {
        vector<RWSet> rwsets;
-       bool ok = kafka->pull(rwsets);
+       RWSet rwset = _rwsetList.pop();
+       rwsets.push_back(rwset);
 
-       if (ok == false){
-           continue;
-       }
        auto newBlock = createBlock(rwsets);
 
        for(shared_ptr<Peer> peer : committer){
@@ -262,14 +258,18 @@ void Kafaka::push(RWSet rwset) {
     channel.push(rwset);
 }
 
-bool Kafaka::pull(vector<RWSet> & rwsets){
+vector<RWSet> Kafaka::pull(){
 
-    if (channel.size() > 2) {
-        rwsets = channel.pop(3);
-        return true;
-    }
+    RWSet rwset1 = channel.pop();
+    RWSet rwset2 = channel.pop();
+    RWSet rwset3 = channel.pop();
 
-    return false;
+    vector<RWSet> rwsets;
+    rwsets.push_back(rwset1);
+    rwsets.push_back(rwset2);
+    rwsets.push_back(rwset3);
+
+    return rwsets;
 }
 
 // FABRIC
@@ -340,12 +340,14 @@ string Fabric::readTranaction( string key , string auth ){
 }
 
 void Fabric::sendToOrderer(RWSet rwset){
-    if (roundrobin) {
-        orderer1->addRWSet(rwset);
-        roundrobin = false;
-    } else {
-        orderer2->addRWSet(rwset);
-        roundrobin = true;
-    }
+//    if (roundrobin) {
+//        orderer1->addRWSet(rwset);
+//        roundrobin = false;
+//    } else {
+//        orderer2->addRWSet(rwset);
+//        roundrobin = true;
+//    }
+
+    orderer1->addRWSet(rwset);
 }
 

@@ -75,17 +75,16 @@ struct Ledger  {
         db = std::make_shared<LevelDB>();
     }
 
-    vector<_Block> blockchain;
+    vector<shared_ptr<_Block>> blockchain;
     shared_ptr<LevelDB> db;
-    std::mutex _vMtx;
     time_t timeCur;
 
     void createGenesisBlock();
     void addBlock(Block block);
-    _Block generateBlock(_Block oldBlock , Block block );
+    shared_ptr<_Block>  generateBlock(shared_ptr<_Block>  oldBlock , Block block );
     void  setState(_Transaction trans );
     string getState(Transaction trans );
-    string calculateHash(_Block block);
+    string calculateHash(shared_ptr<_Block> block);
 };
 
 //==================================  Fabric-CA & MSP
@@ -157,12 +156,11 @@ private:
     std::thread _consumer;
 
     MSP msp;
-    list<RWSet> _rwsetList;
-    std::mutex _rwsetMtx;
-    std::condition_variable _rwsetCond;
-    vector<shared_ptr<Peer>> committer;
     Fabric* fabric;
     shared_ptr<Kafaka> kafka;
+    vector<shared_ptr<Peer>> committer;
+
+    hama::ConcurrentQueue<RWSet> _rwsetList;
 
     bool _stop;
 public:
@@ -180,7 +178,7 @@ struct Kafaka  {
 
     hama::ConcurrentQueue<RWSet> channel;
     void push(RWSet rwset);
-    bool pull(vector<RWSet> & rwsets);
+    vector<RWSet>  pull();
 
 };
 
