@@ -29,12 +29,12 @@ void Ledger::createGenesisBlock(){
     genesisBlock->Hash = calculateHash(genesisBlock);
     genesisBlock->PrevHash = "";
 
-    //std::lock_guard<std::mutex> lock(_vMtx);
+    std::lock_guard<std::mutex> lock(_blockMtx);
     blockchain.push_back(genesisBlock);
 }
 
 void Ledger::addBlock(Block block){
-    //std::lock_guard<std::mutex> lock(_vMtx);
+    std::lock_guard<std::mutex> lock(_blockMtx);
     shared_ptr<_Block> prevBlock = blockchain.back();
     shared_ptr<_Block> newBlock = generateBlock(prevBlock, block);
     blockchain.push_back(newBlock);
@@ -58,11 +58,11 @@ string Ledger::getState(Transaction trans ){
 
 string Ledger::calculateHash(shared_ptr<_Block> block) {
 
-//    string trans_concated;
-//    for (_Transaction trans : block.Trans ) {
-//        trans_concated.append(trans.value);
-//    }
-    //string record = hama::string_format("%d%lf%s%s\n", block.Index, block.Timestamp, trans_concated, block.PrevHash);
+    string trans_concated;
+    for (_Transaction trans : block->Trans ) {
+        trans_concated.append(trans.value);
+    }
+    //string record = hama::string_format("%d%lf%s%s\n", block->Index, block->Timestamp, trans_concated, block->PrevHash);
     string record = "afefwfwef2323f2332f23f23wfwefweref23423423sdvsvsr423423432432432f23f23f23432234322f";
     string hashed = sha256(record);
     return hashed;
@@ -188,53 +188,31 @@ string Peer::getData(string key){
     return ledger->db->getValue(key);
 }
 
-
-Orderer::Orderer(MSP _msp, shared_ptr<Kafaka> _kafka, vector<shared_ptr<Peer>> _committer, Fabric* _fabric){
+Orderer::Orderer(MSP _msp,  vector<shared_ptr<Peer>> _committer, Fabric* _fabric){
     msp = _msp;
     fabric = _fabric;
     committer = _committer;
 }
+
 Orderer::~Orderer(){
 
 }
 
-void Orderer::addCommitter(shared_ptr<Peer> peer){
-    committer.push_back(peer);
-}
-
 void Orderer::start(){
-
-  //  _producer = std::thread([&]() { producer(); });
- //   _consumer = std::thread([&]() { consumer(); });
-
+    _consumer = std::thread([&]() { consumer(); });
 }
 
 void Orderer::addRWSet(RWSet rwset){
-    //_rwsetList.push(rwset);
-    vector<RWSet> rwsets;
-    rwsets.push_back(rwset);
-    auto newBlock = createBlock(rwsets);
 
-    for(shared_ptr<Peer> peer : committer){
-        peer->addBlock(newBlock);
-    }
-}
+    kafka.push(rwset);
 
-void Orderer::producer(){
-    while (!_stop){
-        kafka->push(_rwsetList.pop());
-    }
 }
 
 void Orderer::consumer(){
 
     while (!_stop) {
-       vector<RWSet> rwsets;
-       RWSet rwset = _rwsetList.pop();
-       rwsets.push_back(rwset);
-
+       vector<RWSet> rwsets = kafka.pop(3);
        auto newBlock = createBlock(rwsets);
-
        for(shared_ptr<Peer> peer : committer){
            peer->addBlock(newBlock);
        }
@@ -254,23 +232,23 @@ Block Orderer::createBlock(vector<RWSet> _rwsets){
     return newBlock;
 }
 
-void Kafaka::push(RWSet rwset) {
-    channel.push(rwset);
-}
-
-vector<RWSet> Kafaka::pull(){
-
-    RWSet rwset1 = channel.pop();
-    RWSet rwset2 = channel.pop();
-    RWSet rwset3 = channel.pop();
-
-    vector<RWSet> rwsets;
-    rwsets.push_back(rwset1);
-    rwsets.push_back(rwset2);
-    rwsets.push_back(rwset3);
-
-    return rwsets;
-}
+//void Kafaka::push(RWSet rwset) {
+//    channel.push(rwset);
+//}
+//
+//vector<RWSet> Kafaka::pull(){
+//
+//    RWSet rwset1 = channel.pop();
+////    RWSet rwset2 = channel.pop();
+////    RWSet rwset3 = channel.pop();
+//
+//    vector<RWSet> rwsets;
+//    rwsets.push_back(rwset1);
+////    rwsets.push_back(rwset2);
+////    rwsets.push_back(rwset3);
+//
+//    return rwsets;
+//}
 
 // FABRIC
 void Fabric::start(){
@@ -308,7 +286,7 @@ void Fabric::start(){
     committer->start();
 
     // 2. kafka simulator start
-    kafka = std::make_shared<Kafaka>();
+    //kafka = std::make_shared<Kafaka>();
 
     // 3. two orderer simulator start (first is input, second is ordering)
     MSP msp_orderer1;
@@ -319,7 +297,7 @@ void Fabric::start(){
     _committer.push_back(endorser2);
     _committer.push_back(committer);
 
-    orderer1 = std::make_shared<Orderer>(msp_orderer1, kafka, _committer, this);
+    orderer1 = std::make_shared<Orderer>(msp_orderer1, _committer, this);
     orderer1->start();
 }
 

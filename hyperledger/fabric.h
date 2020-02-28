@@ -78,6 +78,7 @@ struct Ledger  {
     vector<shared_ptr<_Block>> blockchain;
     shared_ptr<LevelDB> db;
     time_t timeCur;
+    std::mutex                        _blockMtx;
 
     void createGenesisBlock();
     void addBlock(Block block);
@@ -148,39 +149,36 @@ class Fabric;
 class Kafaka;
 class Orderer  {
 public:
-    Orderer(MSP _msp, shared_ptr<Kafaka> _kafka, vector<shared_ptr<Peer>> _committer, Fabric* _fabric);
+    Orderer(MSP _msp, vector<shared_ptr<Peer>> _committer, Fabric* _fabric);
     ~Orderer();
 
 private:
-    std::thread _producer;
     std::thread _consumer;
 
     MSP msp;
     Fabric* fabric;
-    shared_ptr<Kafaka> kafka;
+
     vector<shared_ptr<Peer>> committer;
 
-    hama::ConcurrentQueue<RWSet> _rwsetList;
-
+    //std::mutex _ordererMtx;
+    hama::ConcurrentQueue<RWSet> kafka;
     bool _stop;
 public:
     void start();
     void addRWSet(RWSet rwset);
-    void producer();
     void consumer();
 
-    void addCommitter(shared_ptr<Peer> peer);
     Block createBlock(vector<RWSet> _rwsets);
 };
 
 //==================================  KAFKA
-struct Kafaka  {
-
-    hama::ConcurrentQueue<RWSet> channel;
-    void push(RWSet rwset);
-    vector<RWSet>  pull();
-
-};
+//struct Kafaka  {
+//
+//    hama::ConcurrentQueue<RWSet> channel;
+//    void push(RWSet rwset);
+//    vector<RWSet>  pull();
+//
+//};
 
 //==================================  FABRIC  =================================//
 class Fabric {
