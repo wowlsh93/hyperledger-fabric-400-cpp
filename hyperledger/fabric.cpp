@@ -276,7 +276,9 @@ vector<RWSet> Kafaka::pull(){
 void Fabric::start(){
 
     // 1. three peer simulator start (two endorsing peer, one committing only peer)
-    shared_ptr<Ledger> ledger = std::make_shared<Ledger>();
+    shared_ptr<Ledger> ledger1 = std::make_shared<Ledger>();
+    shared_ptr<Ledger> ledger2 = std::make_shared<Ledger>();
+    shared_ptr<Ledger> ledger3 = std::make_shared<Ledger>();
 
 
     MSP_org1 = "org1";
@@ -290,19 +292,19 @@ void Fabric::start(){
     MSP msp_peer1;
     msp_peer1.id = MSP_peer1;
 
-    endorser1 = std::make_shared<Peer>(1, msp_peer1, this, ledger);
+    endorser1 = std::make_shared<Peer>(1, msp_peer1, this, ledger1);
     endorser1->start();
 
     MSP msp_peer2;
     msp_peer2.id = MSP_peer2;
 
-    endorser2 = std::make_shared<Peer>(1, msp_peer2, this, ledger);
+    endorser2 = std::make_shared<Peer>(1, msp_peer2, this, ledger2);
     endorser2->start();
 
     MSP msp_peer3;
     msp_peer3.id = MSP_peer3;
 
-    committer = std::make_shared<Peer>(0, msp_peer3, this, ledger);
+    committer = std::make_shared<Peer>(0, msp_peer3, this, ledger3);
     committer->start();
 
     // 2. kafka simulator start

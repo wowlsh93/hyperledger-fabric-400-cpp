@@ -12,12 +12,12 @@ int main() {
 
     hama::StopWatch sw;
 
-    for (int i = 0 ; i < 1010 ; i++) {
+    for (int i = 0 ; i < 100010 ; i++) {
         sdk.writeTrans(std::to_string(i),std::to_string(i));
     }
     std::cout << "Start 3!!!" << std::endl;
     while(true) {
-        string result = sdk.getTrans("1000");
+        string result = sdk.getTrans("100000");
         if (result != "") {
             break;
         }
